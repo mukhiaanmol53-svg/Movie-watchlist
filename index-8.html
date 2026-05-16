@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Watchlist</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181c;
+    --surface2: #222228;
+    --border: #2e2e38;
+    --accent: #c8a96e;
+    --accent-dim: rgba(200,169,110,0.12);
+    --text: #ede9df;
+    --text-muted: #888896;
+    --red: #e05c5c;
+    --green: #5cba8a;
+    --radius: 12px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* ---- HEADER ---- */
+  header {
+    background: linear-gradient(180deg, #14141a 0%, transparent 100%);
+    padding: 48px 24px 32px;
+    text-align: center;
+    position: relative;
+  }
+  header::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 2px;
+    background: var(--accent);
+    margin: 18px auto 0;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+  header h1 span { color: var(--accent); }
+  header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 6px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+
+  /* ---- TOOLBAR ---- */
+  .toolbar {
+    max-width: 1100px;
+    margin: 0 auto 28px;
+    padding: 0 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  .search-wrap {
+    flex: 1 1 220px;
+    position: relative;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+  input[type="text"].search {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.88rem;
+    padding: 10px 14px 10px 40px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"].search:focus { border-color: var(--accent); }
+  input[type="text"].search::placeholder { color: var(--text-muted); }
+
+  select.filter-sel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.88rem;
+    padding: 10px 14px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888896' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 34px;
+  }
+  select.filter-sel:focus { border-color: var(--accent); }
+
+  .btn-add {
+    background: var(--accent);
+    color: #0e0e10;
+    border: none;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 10px 22px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s, transform 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .btn-add:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  /* ---- STATS BAR ---- */
+  .stats {
+    max-width: 1100px;
+    margin: 0 auto 24px;
+    padding: 0 24px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .stat-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ---- GRID ---- */
+  .grid {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+  }
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state .big { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--text); margin-bottom: 8px; }
+
+  /* ---- CARD ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    animation: fadeUp 0.3s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    line-height: 1.3;
+    color: var(--text);
+    flex: 1;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 100px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge-watched   { background: rgba(92,186,138,0.18); color: var(--green); border: 1px solid rgba(92,186,138,0.3); }
+  .badge-unwatched { background: rgba(136,136,150,0.15); color: var(--text-muted); border: 1px solid rgba(136,136,150,0.25); }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .genre-tag {
+    font-size: 0.75rem;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border-radius: 6px;
+    padding: 2px 9px;
+    font-weight: 500;
+  }
+  .rating-stars {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }
+  .star {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+    background: var(--border);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  }
+  .star.on { background: var(--accent); }
+  .rating-num {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-left: 4px;
+  }
+
+  .card-notes {
+    font-size: 0.83rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+    border-left: 2px solid var(--border);
+    padding-left: 10px;
+    font-style: italic;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .btn-edit, .btn-del {
+    flex: 1;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 8px 0;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .btn-edit { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-edit:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-del  { background: rgba(224,92,92,0.1); color: var(--red); border: 1px solid rgba(224,92,92,0.25); }
+  .btn-del:hover  { background: rgba(224,92,92,0.2); }
+
+  /* ---- MODAL ---- */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: var(--shadow);
+    animation: popIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .modal-header {
+    padding: 24px 24px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+  }
+  .btn-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+  .btn-close:hover { color: var(--text); }
+
+  .modal-body { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; font-weight: 500; }
+  .field input[type="text"],
+  .field input[type="number"],
+  .field select,
+  .field textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field input::placeholder, .field textarea::placeholder { color: #555566; }
+  .field select { appearance: none; cursor: pointer; }
+  .field .err { font-size: 0.76rem; color: var(--red); display: none; }
+  .field.has-err input, .field.has-err select { border-color: var(--red); }
+  .field.has-err .err { display: block; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .modal-footer { padding: 0 24px 24px; display: flex; gap: 10px; }
+  .btn-save, .btn-cancel {
+    flex: 1;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 12px 0;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .btn-save   { background: var(--accent); color: #0e0e10; }
+  .btn-save:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-cancel { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-cancel:hover { border-color: var(--text-muted); }
+
+  /* ---- CONFIRM DIALOG ---- */
+  .confirm-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 360px;
+    padding: 28px 24px 24px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    animation: popIn 0.2s ease both;
+  }
+  .confirm-box h3 { font-family: 'Playfair Display', serif; margin-bottom: 10px; font-size: 1.15rem; }
+  .confirm-box p  { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 22px; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .btn-confirm-del {
+    flex: 1; background: var(--red); color: #fff; border: none;
+    border-radius: 8px; font-family: inherit; font-size: 0.88rem;
+    font-weight: 600; padding: 11px 0; cursor: pointer; transition: opacity 0.2s;
+  }
+  .btn-confirm-del:hover { opacity: 0.85; }
+  .btn-confirm-cancel {
+    flex: 1; background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; font-family: inherit; font-size: 0.88rem; font-weight: 500;
+    padding: 11px 0; cursor: pointer; transition: border-color 0.2s;
+  }
+  .btn-confirm-cancel:hover { border-color: var(--text-muted); }
+
+  /* ---- SCROLLBAR ---- */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 520px) {
+    .row2 { grid-template-columns: 1fr; }
+    .stats { gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Watch<span>list</span></h1>
+  <p>Your personal cinema log</p>
+</header>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" class="search" id="searchInput" placeholder="Search by title..." />
+  </div>
+  <select class="filter-sel" id="filterStatus">
+    <option value="all">All movies</option>
+    <option value="watched">Watched</option>
+    <option value="unwatched">Not watched</option>
+  </select>
+  <select class="filter-sel" id="sortBy">
+    <option value="newest">Newest first</option>
+    <option value="oldest">Oldest first</option>
+    <option value="rating-desc">Rating: high to low</option>
+    <option value="rating-asc">Rating: low to high</option>
+    <option value="title">Title A-Z</option>
+  </select>
+  <button class="btn-add" id="btnOpenAdd">Add Movie</button>
+</div>
+
+<div class="stats" id="statsBar"></div>
+
+<div class="grid" id="movieGrid"></div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Add Movie</span>
+      <button class="btn-close" id="btnModalClose">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field" id="fieldTitle">
+        <label for="fTitle">Title</label>
+        <input type="text" id="fTitle" placeholder="e.g. The Godfather" maxlength="120" />
+        <span class="err">Title is required.</span>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="fGenre">Genre</label>
+          <select id="fGenre">
+            <option value="Drama">Drama</option>
+            <option value="Comedy">Comedy</option>
+            <option value="Action">Action</option>
+            <option value="Thriller">Thriller</option>
+            <option value="Horror">Horror</option>
+            <option value="Sci-Fi">Sci-Fi</option>
+            <option value="Romance">Romance</option>
+            <option value="Animation">Animation</option>
+            <option value="Documentary">Documentary</option>
+            <option value="Fantasy">Fantasy</option>
+            <option value="Crime">Crime</option>
+            <option value="Adventure">Adventure</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fStatus">Status</label>
+          <select id="fStatus">
+            <option value="unwatched">Not Watched</option>
+            <option value="watched">Watched</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fRating">Rating (1-10)</label>
+        <input type="number" id="fRating" min="1" max="10" placeholder="e.g. 8" />
+      </div>
+      <div class="field">
+        <label for="fNotes">Notes (optional)</label>
+        <textarea id="fNotes" rows="3" placeholder="Your thoughts..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="btnModalCancel">Cancel</button>
+      <button class="btn-save" id="btnModalSave">Save Movie</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3>Delete Movie?</h3>
+    <p>This action cannot be undone. The movie will be permanently removed from your list.</p>
+    <div class="confirm-btns">
+      <button class="btn-confirm-cancel" id="btnConfirmCancel">Cancel</button>
+      <button class="btn-confirm-del" id="btnConfirmDel">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'watchlist_v1';
+  let movies = [];
+  let editId = null;
+  let deleteId = null;
+
+  // ---- STORAGE ----
+  function load() {
+    try { movies = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { movies = []; }
+  }
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
+  }
+
+  // ---- UTILS ----
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+  function starsHTML(rating) {
+    if (!rating) return '<span style="color:var(--text-muted);font-size:0.78rem">No rating</span>';
+    let h = '';
+    for (let i = 1; i <= 10; i++) h += `<span class="star${i <= rating ? ' on' : ''}"></span>`;
+    return h + `<span class="rating-num">${rating}/10</span>`;
+  }
+
+  // ---- RENDER ----
+  function getFiltered() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const status = document.getElementById('filterStatus').value;
+    const sort = document.getElementById('sortBy').value;
+
+    let list = movies.filter(m => {
+      if (q && !m.title.toLowerCase().includes(q)) return false;
+      if (status === 'watched' && m.status !== 'watched') return false;
+      if (status === 'unwatched' && m.status !== 'unwatched') return false;
+      return true;
+    });
+
+    if (sort === 'newest') list.sort((a,b) => b.created - a.created);
+    else if (sort === 'oldest') list.sort((a,b) => a.created - b.created);
+    else if (sort === 'rating-desc') list.sort((a,b) => (b.rating||0) - (a.rating||0));
+    else if (sort === 'rating-asc')  list.sort((a,b) => (a.rating||0) - (b.rating||0));
+    else if (sort === 'title') list.sort((a,b) => a.title.localeCompare(b.title));
+    return list;
+  }
+
+  function renderStats() {
+    const total = movies.length;
+    const watched = movies.filter(m => m.status === 'watched').length;
+    const ratings = movies.filter(m => m.rating).map(m => m.rating);
+    const avg = ratings.length ? (ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1) : '—';
+    document.getElementById('statsBar').innerHTML = `
+      <div class="stat"><span class="stat-val">${total}</span><span class="stat-label">Total</span></div>
+      <div class="stat"><span class="stat-val">${watched}</span><span class="stat-label">Watched</span></div>
+      <div class="stat"><span class="stat-val">${total-watched}</span><span class="stat-label">To Watch</span></div>
+      <div class="stat"><span class="stat-val">${avg}</span><span class="stat-label">Avg Rating</span></div>
+    `;
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('movieGrid');
+    const list = getFiltered();
+    if (!list.length) {
+      grid.innerHTML = `<div class="empty-state"><div class="big">${movies.length ? 'No results found' : 'Your list is empty'}</div><div>${movies.length ? 'Try a different search or filter.' : 'Add your first movie to get started.'}</div></div>`;
+      return;
+    }
+    grid.innerHTML = list.map(m => `
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">${escHtml(m.title)}</span>
+          <span class="badge ${m.status === 'watched' ? 'badge-watched' : 'badge-unwatched'}">${m.status === 'watched' ? 'Watched' : 'Not Watched'}</span>
+        </div>
+        <div class="card-meta">
+          <span class="genre-tag">${escHtml(m.genre)}</span>
+          <div class="rating-stars">${starsHTML(m.rating)}</div>
+        </div>
+        ${m.notes ? `<div class="card-notes">${escHtml(m.notes)}</div>` : ''}
+        <div class="card-actions">
+          <button class="btn-edit" onclick="openEdit('${m.id}')">Edit</button>
+          <button class="btn-del" onclick="openDelete('${m.id}')">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function render() { renderStats(); renderGrid(); }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ---- MODAL ----
+  function openModal(title) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalOverlay').classList.add('open');
+    document.getElementById('fTitle').focus();
+  }
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    resetForm();
+    editId = null;
+  }
+  function resetForm() {
+    document.getElementById('fTitle').value = '';
+    document.getElementById('fGenre').value = 'Drama';
+    document.getElementById('fStatus').value = 'unwatched';
+    document.getElementById('fRating').value = '';
+    document.getElementById('fNotes').value = '';
+    document.getElementById('fieldTitle').classList.remove('has-err');
+  }
+
+  function openEdit(id) {
+    const m = movies.find(x => x.id === id);
+    if (!m) return;
+    editId = id;
+    document.getElementById('fTitle').value = m.title;
+    document.getElementById('fGenre').value = m.genre;
+    document.getElementById('fStatus').value = m.status;
+    document.getElementById('fRating').value = m.rating || '';
+    document.getElementById('fNotes').value = m.notes || '';
+    openModal('Edit Movie');
+  }
+
+  function saveMovie() {
+    const title = document.getElementById('fTitle').value.trim();
+    if (!title) { document.getElementById('fieldTitle').classList.add('has-err'); return; }
+    document.getElementById('fieldTitle').classList.remove('has-err');
+
+    const rating = parseInt(document.getElementById('fRating').value) || null;
+    const data = {
+      title,
+      genre: document.getElementById('fGenre').value,
+      status: document.getElementById('fStatus').value,
+      rating: (rating && rating >= 1 && rating <= 10) ? rating : null,
+      notes: document.getElementById('fNotes').value.trim()
+    };
+
+    if (editId) {
+      const idx = movies.findIndex(m => m.id === editId);
+      if (idx > -1) movies[idx] = { ...movies[idx], ...data };
+    } else {
+      movies.unshift({ id: uid(), created: Date.now(), ...data });
+    }
+    save(); render(); closeModal();
+  }
+
+  // ---- DELETE ----
+  function openDelete(id) {
+    deleteId = id;
+    document.getElementById('confirmOverlay').classList.add('open');
+  }
+  function closeConfirm() {
+    document.getElementById('confirmOverlay').classList.remove('open');
+    deleteId = null;
+  }
+  function confirmDelete() {
+    movies = movies.filter(m => m.id !== deleteId);
+    save(); render(); closeConfirm();
+  }
+
+  // ---- EVENTS ----
+  document.getElementById('btnOpenAdd').addEventListener('click', () => { resetForm(); openModal('Add Movie'); });
+  document.getElementById('btnModalClose').addEventListener('click', closeModal);
+  document.getElementById('btnModalCancel').addEventListener('click', closeModal);
+  document.getElementById('btnModalSave').addEventListener('click', saveMovie);
+  document.getElementById('btnConfirmCancel').addEventListener('click', closeConfirm);
+  document.getElementById('btnConfirmDel').addEventListener('click', confirmDelete);
+  document.getElementById('searchInput').addEventListener('input', render);
+  document.getElementById('filterStatus').addEventListener('change', render);
+  document.getElementById('sortBy').addEventListener('change', render);
+
+  document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+  document.getElementById('confirmOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeConfirm(); });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal(); closeConfirm(); }
+    if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('open')) saveMovie();
+  });
+
+  // ---- INIT ----
+  load(); render();
+</script>
+</body>
+</html>
